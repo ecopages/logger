@@ -1,0 +1,29 @@
+{
+	"name": "@ecopages/logger",
+	"version": "0.0.0",
+	"license": "MIT",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"type": "module",
+	"files": ["src"],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ecopages/logger.git",
+		"directory": "packages/logger"
+	},
+	"scripts": {
+		"build": "bun run build.ts",
+		"lint": "bunx @biomejs/biome check --apply .",
+		"lint-staged": "lint-staged"
+	},
+	"devDependencies": {
+		"@changesets/changelog-github": "^0.5.0",
+		"@changesets/cli": "^2.27.5",
+		"@types/bun": "latest",
+		"husky": "^9.0.10",
+		"lint-staged": "^15.2.2"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
+}
