@@ -8,6 +8,7 @@ async function buildLib() {
     outdir: 'dist',
     format: 'esm',
     minify: true,
+    target: 'browser',
   });
 
   if (!build.success) {
