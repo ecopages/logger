@@ -56,7 +56,7 @@ export class Logger {
    * @param args The arguments to be logged.
    */
   debug(...args: any[]) {
-    if (process.env.ECO_PAGES_DEBUG === 'true') {
+    if (process.env.ECOPAGES_LOGGER_DEBUG === 'true') {
       this.logInternal(DEBUG, ...args);
     }
   }

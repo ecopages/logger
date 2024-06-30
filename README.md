@@ -62,3 +62,10 @@ class ExtendedLogger extends Logger {
   }
 }
 ```
+
+Debugging Instructions
+By default, the debugging feature is turned off. To enable it, please add the following line to your `.env` file:
+
+```sh
+ECOPAGES_LOGGER_DEBUG=true
+```
