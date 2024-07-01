@@ -63,7 +63,8 @@ class ExtendedLogger extends Logger {
 }
 ```
 
-Debugging Instructions
+### Debugging Instructions
+
 By default, the debugging feature is turned off. To enable it, please add the following line to your `.env` file:
 
 ```sh
