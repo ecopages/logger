@@ -65,8 +65,12 @@ class ExtendedLogger extends Logger {
 
 ### Debugging Instructions
 
-By default, the debugging feature is turned off. To enable it, please add the following line to your `.env` file:
+By default, the debugging feature is turned off. To enable it you can provide an options object to the logger constructor.
 
-```sh
-ECOPAGES_LOGGER_DEBUG=true
+```ts
+const logger = new Logger("[my-app]", { debug: true });
+```
+
+```bash
+[my-app] This is a debug message
 ```
