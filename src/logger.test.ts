@@ -7,15 +7,28 @@ const isBrowser = typeof window !== 'undefined';
 const getExpectedFormat = (
   logger: Logger,
   prefix: string,
-  message: string,
+  args: any[],
   timestamp?: string,
   level: LevelType = 'INFO',
 ) => {
   const fullPrefix = timestamp ? `[${timestamp}] ${prefix}` : prefix;
   if (isBrowser) {
-    return [`%c${fullPrefix}`, logger['colors'][level], message];
+    const formatters = args.map((arg) => {
+      if (arg === null || arg === undefined) return '%s';
+      switch (typeof arg) {
+        case 'object':
+          return '%o';
+        case 'number':
+          return '%d';
+        case 'boolean':
+          return '%s';
+        default:
+          return '%s';
+      }
+    });
+    return [`%c${fullPrefix} ${formatters.join(' ')}`, logger['colors'][level], ...args];
   }
-  return [`${logger['colors'][level]}${fullPrefix}`, message, '\x1b[0m'];
+  return [`${logger['colors'][level]}${fullPrefix}`, ...args, '\x1b[0m'];
 };
 
 const mockTimestamp = (expected: string, options: Intl.DateTimeFormatOptions) => {
@@ -41,7 +54,7 @@ describe('Logger', () => {
     logger = new Logger(LOG_PREFIX);
     const consoleSpy = spyOn(console, 'log');
     logger.info(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE]));
     consoleSpy.mockRestore();
   });
 
@@ -49,7 +62,7 @@ describe('Logger', () => {
     logger = new Logger(LOG_PREFIX);
     const consoleSpy = spyOn(console, 'log');
     logger.warn(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'WARN'));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'));
     consoleSpy.mockRestore();
   });
 
@@ -57,7 +70,9 @@ describe('Logger', () => {
     logger = new Logger(LOG_PREFIX);
     const consoleSpy = spyOn(console, 'log');
     logger.error(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'ERROR'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'ERROR'),
+    );
     consoleSpy.mockRestore();
   });
 
@@ -66,7 +81,9 @@ describe('Logger', () => {
     const consoleSpy = spyOn(console, 'log');
     import.meta.env.ECOPAGES_LOGGER_DEBUG = 'true';
     logger.debug(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'DEBUG'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'DEBUG'),
+    );
     consoleSpy.mockRestore();
   });
 
@@ -167,7 +184,7 @@ describe('Logger', () => {
     logger = new Logger(customPrefix);
     const consoleSpy = spyOn(console, 'log');
     logger.info(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, customPrefix, LOG_MESSAGE));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, customPrefix, [LOG_MESSAGE]));
     consoleSpy.mockRestore();
   });
 
@@ -216,7 +233,7 @@ describe('Logger', () => {
       const consoleSpy = spyOn(console, 'log');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, expected));
+      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], expected));
 
       dateNowSpy.mockRestore();
       consoleSpy.mockRestore();
@@ -231,7 +248,7 @@ describe('Logger', () => {
     const consoleSpy = spyOn(console, 'log');
 
     logger.info(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, expected));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], expected));
 
     dateNowSpy.mockRestore();
     consoleSpy.mockRestore();
@@ -243,7 +260,7 @@ describe('Logger', () => {
     const dateNowSpy = spyOn(Date.prototype, 'toLocaleString');
 
     logger.info(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE]));
     expect(dateNowSpy).not.toHaveBeenCalled();
 
     dateNowSpy.mockRestore();
@@ -266,7 +283,7 @@ describe('Logger', () => {
       const consoleSpy = spyOn(console, 'log');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, expected));
+      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], expected));
 
       dateNowSpy.mockRestore();
       consoleSpy.mockRestore();
@@ -281,7 +298,7 @@ describe('Logger', () => {
     const consoleSpy = spyOn(console, 'log');
 
     logger.info(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, expected));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], expected));
 
     dateNowSpy.mockRestore();
     consoleSpy.mockRestore();
@@ -296,7 +313,7 @@ describe('Logger', () => {
     const consoleSpy = spyOn(console, 'log');
 
     logger.info(LOG_MESSAGE);
-    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, customPrefix, LOG_MESSAGE, expected));
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, customPrefix, [LOG_MESSAGE], expected));
 
     dateNowSpy.mockRestore();
     consoleSpy.mockRestore();
@@ -328,15 +345,19 @@ describe('Logger', () => {
       const consoleSpy = spyOn(console, 'log');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'INFO'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
+      );
 
       logger.error(LOG_MESSAGE);
       expect(consoleSpy).toHaveBeenCalledWith(
-        ...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'ERROR'),
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'ERROR'),
       );
 
       logger.warn(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'WARN'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'),
+      );
 
       consoleSpy.mockRestore();
     });
@@ -352,15 +373,19 @@ describe('Logger', () => {
       const consoleSpy = spyOn(console, 'log');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'INFO'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
+      );
 
       logger.error(LOG_MESSAGE);
       expect(consoleSpy).toHaveBeenCalledWith(
-        ...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'ERROR'),
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'ERROR'),
       );
 
       logger.warn(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'WARN'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'),
+      );
 
       consoleSpy.mockRestore();
     });
@@ -375,7 +400,9 @@ describe('Logger', () => {
       const consoleSpy = spyOn(console, 'log');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, LOG_MESSAGE, undefined, 'INFO'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
+      );
 
       // These should use default colors
       logger.error(LOG_MESSAGE);
@@ -422,5 +449,117 @@ describe('Logger', () => {
     timeStartSpy.mockRestore();
     timeEndSpy.mockRestore();
     logSpy.mockRestore();
+  });
+
+  describe('Mixed Arguments', () => {
+    it('should correctly format different argument types in browser', () => {
+      logger = new Logger(LOG_PREFIX);
+      const consoleSpy = spyOn(console, 'log');
+
+      const testArgs = ['string message', 42, true, { key: 'value' }, null, undefined];
+
+      logger.info(...testArgs);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `%c${LOG_PREFIX} %s %d %s %o %s %s`,
+          logger['colors'].INFO,
+          ...testArgs,
+        );
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(`${logger['colors'].INFO}${LOG_PREFIX}`, ...testArgs, '\x1b[0m');
+      }
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle complex objects', () => {
+      logger = new Logger(LOG_PREFIX);
+      const consoleSpy = spyOn(console, 'log');
+
+      const complexObj = {
+        nested: { value: 42 },
+        array: [1, 2, 3],
+        date: new Date(),
+      };
+
+      logger.info('Status:', complexObj, 'Processing');
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `%c${LOG_PREFIX} %s %o %s`,
+          logger['colors'].INFO,
+          'Status:',
+          complexObj,
+          'Processing',
+        );
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `${logger['colors'].INFO}${LOG_PREFIX}`,
+          'Status:',
+          complexObj,
+          'Processing',
+          '\x1b[0m',
+        );
+      }
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should format debug messages with mixed types', () => {
+      logger = new Logger(LOG_PREFIX, { debug: true });
+      const consoleSpy = spyOn(console, 'log');
+
+      logger.debug('Debug:', { id: 123 }, true, 42, ['a', 'b', 'c']);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `%c${LOG_PREFIX} %s %o %s %d %o`,
+          logger['colors'].DEBUG,
+          'Debug:',
+          { id: 123 },
+          true,
+          42,
+          ['a', 'b', 'c'],
+        );
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `${logger['colors'].DEBUG}${LOG_PREFIX}`,
+          'Debug:',
+          { id: 123 },
+          true,
+          42,
+          ['a', 'b', 'c'],
+          '\x1b[0m',
+        );
+      }
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  // Update existing timestamp tests to use new format
+  it('should format timestamps correctly with mixed types', () => {
+    const expected = '15:30:45';
+    const dateNowSpy = spyOn(Date.prototype, 'toLocaleString').mockImplementation(() => expected);
+
+    logger = new Logger(LOG_PREFIX, { timestamp: true });
+    const consoleSpy = spyOn(console, 'log');
+
+    const args = ['Status:', { count: 42 }, true];
+    logger.info(...args);
+
+    if (isBrowser) {
+      expect(consoleSpy).toHaveBeenCalledWith(`%c[${expected}] ${LOG_PREFIX} %s %o %s`, logger['colors'].INFO, ...args);
+    } else {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        `${logger['colors'].INFO}[${expected}] ${LOG_PREFIX}`,
+        ...args,
+        '\x1b[0m',
+      );
+    }
+
+    dateNowSpy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

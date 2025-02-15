@@ -212,7 +212,7 @@ export class Logger {
           hour12: false,
         };
         break;
-      default: // 'time'
+      default:
         options = {
           hour: '2-digit',
           minute: '2-digit',
@@ -228,6 +228,22 @@ export class Logger {
     return this.colors[level] ?? '';
   }
 
+  private getFormatSpecifier(arg: any): string {
+    if (arg === null) return '%s';
+    if (arg === undefined) return '%s';
+
+    switch (typeof arg) {
+      case 'object':
+        return '%o';
+      case 'number':
+        return '%d';
+      case 'boolean':
+        return '%s';
+      default:
+        return '%s';
+    }
+  }
+
   private logInternal(logOptions?: LogOptions, ...args: any[]) {
     const timestamp = this.getTimestamp();
     const prefix = timestamp + this.prefix;
@@ -239,11 +255,11 @@ export class Logger {
 
     if (isBrowser) {
       const style = logOptions ? this.getColor(logOptions.level) : '';
-      console.log(`%c${prefix}`, style, ...args);
+      const formatters = args.map((arg) => this.getFormatSpecifier(arg));
+      console.log(`%c${prefix} ${formatters.join(' ')}`, style, ...args);
       return;
     }
 
-    // Node.js environment
     const color = logOptions ? this.getColor(logOptions.level) : '';
     const reset = '\x1b[0m';
     console.log(`${color}${prefix}`, ...args, reset);
