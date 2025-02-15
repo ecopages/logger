@@ -10,10 +10,10 @@ A lightweight, flexible logging library. This logger supports multiple log level
 
 ## Usage
 
-First, import the `Logger` class from the `logger.ts` file:
+First, import the `Logger` class from the `@ecopages/logger` pacakge:
 
 ```ts
-import { Logger } from "./path/to/logger";
+import { Logger } from "@ecopages/logger";
 ```
 
 Create an instance of the Logger class, optionally specifying a prefix for all log messages:
