@@ -17,6 +17,9 @@
 			},
 			"correctness": {
 				"useJsxKeyInIterable": "off"
+			},
+			"complexity": {
+				"useLiteralKeys": "off"
 			}
 		}
 	},

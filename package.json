@@ -20,11 +20,14 @@
 		"prepare": "husky",
 		"changeset": "changeset",
 		"prerelease": "bun run build && bun test",
-		"release": "changeset publish"
+		"release": "changeset publish",
+		"test:all": "bun test && bun test:browser",
+		"test:browser": "bun test --preload happydom.ts"
 	},
 	"devDependencies": {
 		"@changesets/changelog-github": "^0.5.0",
 		"@changesets/cli": "^2.27.5",
+		"@happy-dom/global-registrator": "^17.1.0",
 		"@types/bun": "latest",
 		"husky": "^9.0.10",
 		"lint-staged": "^15.2.2"
