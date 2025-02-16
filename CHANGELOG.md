@@ -1,5 +1,17 @@
 # @ecopages/logger
 
+## 0.2.1
+
+### Patch Changes
+
+- [#6](https://github.com/ecopages/logger/pull/6) [`7fbec23`](https://github.com/ecopages/logger/commit/7fbec23db37dbe74dc78ea91fbbd31e50fc64a7a) Thanks [@andeeplus](https://github.com/andeeplus)! - Enhanced Timer Functionality:
+  - Added custom timer implementation using `performance.now()`
+  - Added new `verboseTimer` option to control start message visibility
+  - Added prefix to timer messages for better context
+  - Added support for concurrent timers with accurate duration tracking
+  - Improved timer format consistency with other log messages
+  - Added colored output for timer messages matching logger's color scheme
+
 ## 0.2.0
 
 ### Minor Changes
