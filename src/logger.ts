@@ -48,6 +48,10 @@ export interface LoggerOptions {
    * In Node.js: use ANSI color codes (e.g., '\x1b[32m')
    */
   colors?: Partial<ColorConfig>;
+  /**
+   * If true, logs when timers start. Useful for debugging.
+   */
+  verboseTimer?: boolean;
 }
 
 const INFO: LogOptions = { level: Level.INFO };
@@ -83,7 +87,9 @@ export class Logger {
     debug: false,
     color: true,
     timestampFormat: 'time',
+    verboseTimer: false,
   };
+  private readonly timers: Map<string, number> = new Map();
 
   /**
    * Creates a new instance of the Logger class.
@@ -150,18 +156,19 @@ export class Logger {
    */
   time(label: string, level: LevelType = Level.TIMER) {
     if (!this.options.color) {
-      console.time(label);
+      console.time(`${this.prefix} ${label}`);
       return;
     }
 
-    if (isBrowser) {
-      console.time(`%c${label}`);
-      console.log(`%c${label}`, this.getColor(level));
-      return;
+    this.timers.set(label, performance.now());
+    if (this.options.verboseTimer) {
+      if (isBrowser) {
+        console.log(`%c${this.prefix} ${label}: start`, this.getColor(level));
+      } else {
+        const color = this.getColor(level);
+        console.log(`${color}${this.prefix} ${label}: start${'\x1b[0m'}`);
+      }
     }
-
-    const color = this.getColor(level);
-    console.time(`${color}${label}${'\x1b[0m'}`);
   }
 
   /**
@@ -170,18 +177,25 @@ export class Logger {
    */
   timeEnd(label: string, level: LevelType = Level.TIMER) {
     if (!this.options.color) {
-      console.timeEnd(label);
+      console.timeEnd(`${this.prefix} ${label}`);
       return;
     }
+
+    const startTime = this.timers.get(label);
+    if (startTime === undefined) {
+      console.warn(`Timer '${this.prefix} ${label}' does not exist`);
+      return;
+    }
+
+    const duration = performance.now() - startTime;
+    this.timers.delete(label);
 
     if (isBrowser) {
-      console.timeEnd(`%c${label}`);
-      console.log(`%c${label}`, this.getColor(level));
-      return;
+      console.log(`%c${this.prefix} ${label}: ${duration.toFixed(2)}ms`, this.getColor(level));
+    } else {
+      const color = this.getColor(level);
+      console.log(`${color}${this.prefix} ${label}: ${duration.toFixed(2)}ms${'\x1b[0m'}`);
     }
-
-    const color = this.getColor(level);
-    console.timeEnd(`${color}${label}${'\x1b[0m'}`);
   }
 
   private getTimestamp(): string {

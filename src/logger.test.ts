@@ -1,4 +1,4 @@
-import { describe, expect, it, spyOn } from 'bun:test';
+import { beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { sleep } from 'bun';
 import { type LevelType, Logger, type LoggerOptions } from './logger';
 
@@ -96,38 +96,6 @@ describe('Logger', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should start and stop a timer', async () => {
-    logger = new Logger(LOG_PREFIX);
-    const timeStartSpy = spyOn(console, 'time');
-    const timeEndSpy = spyOn(console, 'timeEnd');
-    const logSpy = spyOn(console, 'log');
-
-    const timerLabel = 'Test Timer';
-    logger.time(timerLabel);
-
-    if (isBrowser) {
-      expect(timeStartSpy).toHaveBeenCalledWith(`%c${timerLabel}`);
-      expect(logSpy).toHaveBeenCalledWith(`%c${timerLabel}`, 'color: #ff00ff');
-    } else {
-      expect(timeStartSpy).toHaveBeenCalledWith(`\x1b[35m${timerLabel}\x1b[0m`);
-    }
-
-    await sleep(100);
-
-    logger.timeEnd(timerLabel);
-
-    if (isBrowser) {
-      expect(timeEndSpy).toHaveBeenCalledWith(`%c${timerLabel}`);
-      expect(logSpy).toHaveBeenCalledWith(`%c${timerLabel}`, 'color: #ff00ff');
-    } else {
-      expect(timeEndSpy).toHaveBeenCalledWith(`\x1b[35m${timerLabel}\x1b[0m`);
-    }
-
-    timeStartSpy.mockRestore();
-    timeEndSpy.mockRestore();
-    logSpy.mockRestore();
-  });
-
   it('should log info message without colors when color is false', () => {
     logger = new Logger(LOG_PREFIX, { color: false });
     const consoleSpy = spyOn(console, 'log');
@@ -159,24 +127,6 @@ describe('Logger', () => {
     logger.debug(LOG_MESSAGE);
     expect(consoleSpy).toHaveBeenCalledWith(LOG_PREFIX, LOG_MESSAGE);
     consoleSpy.mockRestore();
-  });
-
-  it('should start and stop a timer without colors when color is false', async () => {
-    logger = new Logger(LOG_PREFIX, { color: false });
-    const timeStartSpy = spyOn(console, 'time');
-    const timeEndSpy = spyOn(console, 'timeEnd');
-
-    const timerLabel = 'test-timer';
-    logger.time(timerLabel);
-    expect(timeStartSpy).toHaveBeenCalledWith(timerLabel);
-
-    await sleep(100);
-
-    logger.timeEnd(timerLabel);
-    expect(timeEndSpy).toHaveBeenCalledWith(timerLabel);
-
-    timeStartSpy.mockRestore();
-    timeEndSpy.mockRestore();
   });
 
   it('should use custom prefix in log messages', () => {
@@ -415,42 +365,6 @@ describe('Logger', () => {
     });
   });
 
-  it('should start and stop a timer with custom colors', async () => {
-    const customColors = {
-      TIMER: isBrowser ? 'color: purple' : '\x1b[45m',
-    };
-
-    logger = new Logger(LOG_PREFIX, { colors: customColors });
-    const timeStartSpy = spyOn(console, 'time');
-    const timeEndSpy = spyOn(console, 'timeEnd');
-    const logSpy = spyOn(console, 'log');
-
-    const timerLabel = 'Test Timer';
-    logger.time(timerLabel);
-
-    if (isBrowser) {
-      expect(timeStartSpy).toHaveBeenCalledWith(`%c${timerLabel}`);
-      expect(logSpy).toHaveBeenCalledWith(`%c${timerLabel}`, customColors.TIMER);
-    } else {
-      expect(timeStartSpy).toHaveBeenCalledWith(`${customColors.TIMER}${timerLabel}\x1b[0m`);
-    }
-
-    await sleep(100);
-
-    logger.timeEnd(timerLabel);
-
-    if (isBrowser) {
-      expect(timeEndSpy).toHaveBeenCalledWith(`%c${timerLabel}`);
-      expect(logSpy).toHaveBeenCalledWith(`%c${timerLabel}`, customColors.TIMER);
-    } else {
-      expect(timeEndSpy).toHaveBeenCalledWith(`${customColors.TIMER}${timerLabel}\x1b[0m`);
-    }
-
-    timeStartSpy.mockRestore();
-    timeEndSpy.mockRestore();
-    logSpy.mockRestore();
-  });
-
   describe('Mixed Arguments', () => {
     it('should correctly format different argument types in browser', () => {
       logger = new Logger(LOG_PREFIX);
@@ -561,5 +475,174 @@ describe('Logger', () => {
 
     dateNowSpy.mockRestore();
     consoleSpy.mockRestore();
+  });
+
+  describe('Timer', () => {
+    beforeEach(() => {
+      let time = 0;
+      spyOn(performance, 'now').mockImplementation(() => {
+        time += 100;
+        // Each call to performance.now() increments by 100ms
+        return time;
+      });
+    });
+
+    it('should start and stop a timer', () => {
+      logger = new Logger(LOG_PREFIX, { verboseTimer: false });
+      const consoleSpy = spyOn(console, 'log');
+      const warnSpy = spyOn(console, 'warn');
+
+      const timerLabel = 'Timer';
+      logger.time(timerLabel);
+
+      logger.timeEnd(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: 100.00ms`, logger['colors'].TIMER);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `${logger['colors'].TIMER}${LOG_PREFIX} ${timerLabel}: 100.00ms\x1b[0m`,
+        );
+      }
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+      warnSpy.mockRestore();
+    });
+
+    it('should start and stop a timer with verboseTimer', () => {
+      logger = new Logger(LOG_PREFIX, { verboseTimer: true });
+      const consoleSpy = spyOn(console, 'log');
+      const warnSpy = spyOn(console, 'warn');
+
+      const timerLabel = 'Timer';
+      logger.time(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: start`, logger['colors'].TIMER);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(`${logger['colors'].TIMER}${LOG_PREFIX} ${timerLabel}: start\x1b[0m`);
+      }
+
+      logger.timeEnd(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: 100.00ms`, logger['colors'].TIMER);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `${logger['colors'].TIMER}${LOG_PREFIX} ${timerLabel}: 100.00ms\x1b[0m`,
+        );
+      }
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+      warnSpy.mockRestore();
+    });
+
+    it('should use custom colors for timer', () => {
+      const customColors = {
+        TIMER: isBrowser ? 'color: purple' : '\x1b[45m',
+      };
+      logger = new Logger(LOG_PREFIX, { colors: customColors, verboseTimer: true });
+      const consoleSpy = spyOn(console, 'log');
+
+      const timerLabel = 'Custom Timer';
+      logger.time(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: start`, customColors.TIMER);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(`${customColors.TIMER}${LOG_PREFIX} ${timerLabel}: start\x1b[0m`);
+      }
+
+      logger.timeEnd(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: 100.00ms`, customColors.TIMER);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(`${customColors.TIMER}${LOG_PREFIX} ${timerLabel}: 100.00ms\x1b[0m`);
+      }
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should warn when stopping non-existent timer', () => {
+      logger = new Logger(LOG_PREFIX);
+      const warnSpy = spyOn(console, 'warn');
+
+      logger.timeEnd('non-existent');
+      expect(warnSpy).toHaveBeenCalledWith(`Timer '${LOG_PREFIX} non-existent' does not exist`);
+
+      warnSpy.mockRestore();
+    });
+
+    it('should use console.time when colors are disabled', () => {
+      logger = new Logger(LOG_PREFIX, { color: false });
+      const timeStartSpy = spyOn(console, 'time');
+      const timeEndSpy = spyOn(console, 'timeEnd');
+      const consoleSpy = spyOn(console, 'log');
+
+      const timerLabel = 'No Color Timer';
+      logger.time(timerLabel);
+      expect(timeStartSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      logger.timeEnd(timerLabel);
+      expect(timeEndSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      timeStartSpy.mockRestore();
+      timeEndSpy.mockRestore();
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle multiple concurrent timers', () => {
+      let time = 0;
+
+      spyOn(performance, 'now').mockImplementation(() => {
+        time += 100;
+        return time;
+      });
+
+      logger = new Logger(LOG_PREFIX, { verboseTimer: true });
+      const consoleSpy = spyOn(console, 'log');
+
+      const timers = ['timer1', 'timer2', 'timer3'];
+      for (const label of timers) {
+        logger.time(label);
+      }
+
+      const startCalls = consoleSpy.mock.calls.slice(0, 3);
+      startCalls.forEach((call, index) => {
+        const label = timers[index];
+        if (isBrowser) {
+          expect(call[0]).toBe(`%c${LOG_PREFIX} ${label}: start`);
+          expect(call[1]).toBe(logger['colors'].TIMER);
+        } else {
+          expect(call[0]).toBe(`${logger['colors'].TIMER}${LOG_PREFIX} ${label}: start\x1b[0m`);
+        }
+      });
+
+      timers.reverse().forEach((label, index) => {
+        logger.timeEnd(label);
+      });
+
+      const endCalls = consoleSpy.mock.calls.slice(3);
+      const expectedDurations = [100, 300, 500]; // timer3: 100ms, timer2: 300ms, timer1: 500ms
+
+      endCalls.forEach((call, index) => {
+        const label = timers[index];
+        const duration = expectedDurations[index];
+
+        if (isBrowser) {
+          expect(call[0]).toBe(`%c${LOG_PREFIX} ${label}: ${duration.toFixed(2)}ms`);
+          expect(call[1]).toBe(logger['colors'].TIMER);
+        } else {
+          expect(call[0]).toBe(`${logger['colors'].TIMER}${LOG_PREFIX} ${label}: ${duration.toFixed(2)}ms\x1b[0m`);
+        }
+      });
+
+      consoleSpy.mockRestore();
+    });
   });
 });
