@@ -1,76 +1,147 @@
 # @ecopages/logger
 
-A lightweight, flexible logging library. This logger supports multiple log levels and allows for easy extension and integration into any project.
+A lightweight, flexible logging library with color support, timestamps, and timer functionality. This logger supports multiple log levels and allows for easy extension and integration into any project.
 
 ## Features
 
-- **Multiple Log Levels**: Supports `INFO`, `ERROR`, `WARN`, and `DEBUG` log levels for granular control over logging output.
-- **Prefixed Messages**: Allows for prefixing log messages for better identification and filtering.
-- **Easy to Extend**: Designed with simplicity in mind, making it easy to extend or modify to fit specific requirements.
+- **Multiple Log Levels**: Supports `INFO`, `ERROR`, `WARN`, and `DEBUG` log levels
+- **Colored Output**: Configurable colors for different log levels in both browser and Node.js environments
+- **Timestamps**: Optional timestamps with configurable formats
+- **Timer Support**: Built-in timer functionality for performance measurements
+- **Prefixed Messages**: Customizable prefix for all log messages
+- **Environment Detection**: Automatically adapts output format for browser or Node.js environments
+- **Extensible**: Easy to extend with custom functionality
 
-## Usage
+## Installation
 
-First, import the `Logger` class from the `@ecopages/logger` pacakge:
+```bash
+npm install @ecopages/logger
+# or
+yarn add @ecopages/logger
+# or
+bun add @ecopages/logger
+```
+
+## Basic Usage
 
 ```ts
 import { Logger } from "@ecopages/logger";
-```
 
-Create an instance of the Logger class, optionally specifying a prefix for all log messages:
-
-```ts
+// Create a basic logger
 const logger = new Logger("[my-app]");
-```
 
-Use the logger instance to log messages at different levels:
-
-```ts
+// Log messages at different levels
 logger.info("This is an informational message");
 logger.warn("This is a warning message");
 logger.error("This is an error message");
-logger.debug("This is a debug message");
+logger.debug("This is a debug message"); // Only shown if debug is enabled
 ```
 
-```bash
-[my-app] This is an informational message
-[my-app] This is a warning message
-[my-app] This is an error message
-[my-app] This is a debug message
-```
+## Advanced Configuration
 
-## API
-
-### Constructor
-
-- `Logger(prefix: string)`: Creates a new logger instance with the specified prefix.
-
-### Methods
-
-- `info(...args: any[])`: Logs an informational message.
-- `warn(...args: any[])`: Logs a warning message.
-- `error(...args: any[])`: Logs an error message.
-- `debug(...args: any[])`: Logs a debug message.
-
-### Extending the Logger
-
-To extend the logger with additional functionality, you can subclass the Logger class. For example, to add a method for logging fatal errors:
+The logger supports various configuration options:
 
 ```ts
-class ExtendedLogger extends Logger {
-  fatal(...args: any[]) {
-    // Custom implementation for fatal errors
+const logger = new Logger("[my-app]", {
+  debug: true,              // Enable debug messages
+  color: true,             // Enable colored output
+  timestamp: true,         // Add timestamps to messages
+  timestampFormat: 'full', // Configure timestamp format
+  verboseTimer: true,      // Show timer start messages
+  colors: {                // Custom colors
+    INFO: 'color: purple',
+    ERROR: 'color: darkred'
   }
-}
+});
 ```
 
-### Debugging Instructions
+### Configuration Options
 
-By default, the debugging feature is turned off. To enable it you can provide an options object to the logger constructor.
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `debug` | boolean | `false` | Enable debug level messages |
+| `color` | boolean | `true` | Enable colored output |
+| `timestamp` | boolean | `false` | Add timestamps to messages |
+| `timestampFormat` | 'full' \| 'time' \| 'short' | 'time' | Timestamp format |
+| `verboseTimer` | boolean | `false` | Show timer start messages |
+| `colors` | Partial<ColorConfig> | - | Custom colors for log levels |
+
+### Timestamp Formats
+
+- `full`: `YYYY-MM-DD HH:mm:ss`
+- `time`: `HH:mm:ss`
+- `short`: `MM-DD HH:mm:ss`
+
+## Timer Functionality
+
+```ts
+// Start a timer
+logger.time("operation");
+
+// ... some operations ...
+
+// End the timer and log duration
+logger.timeEnd("operation");
+```
+
+## Custom Colors
+
+Colors can be customized differently for browser and Node.js environments:
+
+```ts
+// Browser colors (CSS syntax)
+const logger = new Logger("[my-app]", {
+  colors: {
+    INFO: 'color: purple',
+    ERROR: 'color: darkred',
+    WARN: 'color: orange',
+    DEBUG: 'color: cyan',
+    TIMER: 'color: magenta'
+  }
+});
+
+// Node.js colors (ANSI codes)
+const logger = new Logger("[my-app]", {
+  colors: {
+    INFO: '\x1b[35m',  // Purple
+    ERROR: '\x1b[31m', // Red
+    WARN: '\x1b[33m',  // Yellow
+    DEBUG: '\x1b[36m', // Cyan
+    TIMER: '\x1b[35m'  // Magenta
+  }
+});
+```
+
+## Examples
+
+### With Timestamps and Colors
+
+```ts
+const logger = new Logger("[my-app]", { 
+  timestamp: true, 
+  timestampFormat: 'full' 
+});
+
+logger.info("Application started");
+// Output: [2024-02-16 15:30:45] [my-app] Application started
+```
+
+### With Debug Messages
 
 ```ts
 const logger = new Logger("[my-app]", { debug: true });
+
+logger.debug("Configuration loaded:", { port: 3000 });
+// Output: [my-app] Configuration loaded: { port: 3000 }
 ```
 
-```bash
-[my-app] This is a debug message
+### With Timer
+
+```ts
+const logger = new Logger("[my-app]", { verboseTimer: true });
+
+logger.time("db-query");
+// ... database operation ...
+logger.timeEnd("db-query");
+// Output: [my-app] db-query: 123.45ms
 ```
