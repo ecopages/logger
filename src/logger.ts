@@ -278,4 +278,32 @@ export class Logger {
     const reset = '\x1b[0m';
     console.log(`${color}${prefix}`, ...args, reset);
   }
+
+  /**
+   * Checks if debug mode is currently enabled.
+   * @returns {boolean} - True if debug mode is enabled, false otherwise.
+   */
+  isDebugEnabled(): boolean {
+    return !!this.options.debug;
+  }
+
+  /**
+   * Starts a timer with a label only if debug mode is enabled.
+   * @param label The label for the timer.
+   */
+  debugTime(label: string) {
+    if (this.isDebugEnabled()) {
+      this.time(label, Level.DEBUG);
+    }
+  }
+
+  /**
+   * Ends a timer with a label only if debug mode is enabled.
+   * @param label The label for the timer.
+   */
+  debugTimeEnd(label: string) {
+    if (this.isDebugEnabled()) {
+      this.timeEnd(label, Level.DEBUG);
+    }
+  }
 }
