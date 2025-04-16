@@ -645,4 +645,100 @@ describe('Logger', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('Debug Methods', () => {
+    it('should return correct debug status with isDebugEnabled', () => {
+      logger = new Logger(LOG_PREFIX, { debug: false });
+      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'false';
+      expect(logger.isDebugEnabled()).toBe(false);
+
+      logger = new Logger(LOG_PREFIX, { debug: true });
+      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'false';
+      expect(logger.isDebugEnabled()).toBe(true);
+
+      logger = new Logger(LOG_PREFIX, { debug: false });
+      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'true';
+      expect(logger.isDebugEnabled()).toBe(true);
+    });
+
+    it('should start and stop a debug timer when debug is enabled', () => {
+      let time = 0;
+      spyOn(performance, 'now').mockImplementation(() => {
+        time += 100;
+        return time;
+      });
+
+      logger = new Logger(LOG_PREFIX, { debug: true, verboseTimer: true });
+      const consoleSpy = spyOn(console, 'log');
+
+      const timerLabel = 'DebugTimer';
+      logger.debugTime(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: start`, logger['colors'].DEBUG);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(`${logger['colors'].DEBUG}${LOG_PREFIX} ${timerLabel}: start\x1b[0m`);
+      }
+
+      logger.debugTimeEnd(timerLabel);
+
+      if (isBrowser) {
+        expect(consoleSpy).toHaveBeenCalledWith(`%c${LOG_PREFIX} ${timerLabel}: 100.00ms`, logger['colors'].DEBUG);
+      } else {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `${logger['colors'].DEBUG}${LOG_PREFIX} ${timerLabel}: 100.00ms\x1b[0m`,
+        );
+      }
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should not start or stop a debug timer when debug is disabled', () => {
+      logger = new Logger(LOG_PREFIX, { debug: false });
+      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'false';
+
+      const consoleSpy = spyOn(console, 'log');
+      const warnSpy = spyOn(console, 'warn');
+
+      const timerLabel = 'DisabledDebugTimer';
+      logger.debugTime(timerLabel);
+      logger.debugTimeEnd(timerLabel);
+
+      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+      warnSpy.mockRestore();
+    });
+
+    it('should use console.time for debug timer when colors are disabled', () => {
+      logger = new Logger(LOG_PREFIX, { debug: true, color: false });
+      const timeStartSpy = spyOn(console, 'time');
+      const timeEndSpy = spyOn(console, 'timeEnd');
+      const consoleSpy = spyOn(console, 'log');
+
+      const timerLabel = 'NoColorDebugTimer';
+      logger.debugTime(timerLabel);
+      expect(timeStartSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      logger.debugTimeEnd(timerLabel);
+      expect(timeEndSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      timeStartSpy.mockRestore();
+      timeEndSpy.mockRestore();
+      consoleSpy.mockRestore();
+    });
+
+    it('should warn when stopping non-existent debug timer', () => {
+      logger = new Logger(LOG_PREFIX, { debug: true });
+      const warnSpy = spyOn(console, 'warn');
+
+      logger.debugTimeEnd('non-existent-debug');
+      expect(warnSpy).toHaveBeenCalledWith(`Timer '${LOG_PREFIX} non-existent-debug' does not exist`);
+
+      warnSpy.mockRestore();
+    });
+  });
 });
