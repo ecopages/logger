@@ -1,5 +1,15 @@
 # @ecopages/logger
 
+## 0.2.2
+
+### Patch Changes
+
+- [#9](https://github.com/ecopages/logger/pull/9) [`0aeb304`](https://github.com/ecopages/logger/commit/0aeb304c66ed7dad82368e7db6140203f48a613c) Thanks [@andeeplus](https://github.com/andeeplus)! - Added the following methods to the logger:
+
+  - `isDebugEnabled()`: Returns boolean indicating if debug mode is active
+  - `debugTime(label)`: Start a timer with given label if debug mode is active
+  - `debugTimeEnd(label)`: End timer with given label and log elapsed time if debug mode is active
+
 ## 0.2.1
 
 ### Patch Changes
