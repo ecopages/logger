@@ -290,7 +290,6 @@ export class Logger {
   /**
    * Starts a timer with a label only if debug mode is enabled.
    * @param label The label for the timer.
-   * @param level The log level for the timer.
    */
   debugTime(label: string) {
     if (this.isDebugEnabled()) {
@@ -302,7 +301,6 @@ export class Logger {
   /**
    * Ends a timer with a label only if debug mode is enabled.
    * @param label The label for the timer.
-   * @param level The log level for the timer.
    */
   debugTimeEnd(label: string) {
     if (this.isDebugEnabled()) {
