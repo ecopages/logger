@@ -64,7 +64,7 @@ const logger = new Logger("[my-app]", {
 | `debug`           | boolean                     | `false` | Enable debug level messages  |
 | `color`           | boolean                     | `true`  | Enable colored output        |
 | `timestamp`       | boolean                     | `false` | Add timestamps to messages   |
-| `timestampFormat` | 'full' \| 'time' \| 'short' | 'time'  | Timestamp format             |
+| `timestampFormat` | "full" \| "time" \| "short" | "time"  | Timestamp format             |
 | `verboseTimer`    | boolean                     | `false` | Show timer start messages    |
 | `colors`          | Partial<ColorConfig>        | -       | Custom colors for log levels |
 

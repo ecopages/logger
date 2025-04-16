@@ -295,7 +295,6 @@ export class Logger {
     if (this.isDebugEnabled()) {
       this.time(label, Level.DEBUG);
     }
-    return this;
   }
 
   /**
@@ -306,6 +305,5 @@ export class Logger {
     if (this.isDebugEnabled()) {
       this.timeEnd(label, Level.DEBUG);
     }
-    return this;
   }
 }
