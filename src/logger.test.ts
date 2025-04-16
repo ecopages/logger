@@ -649,15 +649,9 @@ describe('Logger', () => {
   describe('Debug Methods', () => {
     it('should return correct debug status with isDebugEnabled', () => {
       logger = new Logger(LOG_PREFIX, { debug: false });
-      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'false';
       expect(logger.isDebugEnabled()).toBe(false);
 
       logger = new Logger(LOG_PREFIX, { debug: true });
-      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'false';
-      expect(logger.isDebugEnabled()).toBe(true);
-
-      logger = new Logger(LOG_PREFIX, { debug: false });
-      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'true';
       expect(logger.isDebugEnabled()).toBe(true);
     });
 
@@ -695,8 +689,6 @@ describe('Logger', () => {
 
     it('should not start or stop a debug timer when debug is disabled', () => {
       logger = new Logger(LOG_PREFIX, { debug: false });
-      import.meta.env.ECOPAGES_LOGGER_DEBUG = 'false';
-
       const consoleSpy = spyOn(console, 'log');
       const warnSpy = spyOn(console, 'warn');
 

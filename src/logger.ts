@@ -284,10 +284,7 @@ export class Logger {
    * @returns {boolean} - True if debug mode is enabled, false otherwise.
    */
   isDebugEnabled(): boolean {
-    // Check both the options and the environment variable
-    return (
-      this.options.debug || (typeof import.meta !== 'undefined' && import.meta.env?.ECOPAGES_LOGGER_DEBUG === 'true')
-    );
+    return !!this.options.debug;
   }
 
   /**
