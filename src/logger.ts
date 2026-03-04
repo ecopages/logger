@@ -132,11 +132,12 @@ export class Logger {
 
   /**
    * Logs an error message.
-    * When an {@link Error} is provided, its stack (or name/message fallback)
-    * is logged so stack traces remain visible.
+   * Accepts unknown values (e.g. strict TypeScript catch variables).
+   * When an {@link Error} is provided, its stack (or name/message fallback)
+   * is logged so stack traces remain visible.
    * @param args The arguments to be logged.
    */
-  error(...args: LogArgument[]) {
+  error(...args: unknown[]) {
     this.logInternal(ERROR, ...args);
     return this;
   }

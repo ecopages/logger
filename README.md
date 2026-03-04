@@ -81,8 +81,12 @@ To keep stack traces, pass the actual `Error` object to `logger.error`:
 ```ts
 try {
 	throw new Error("Something failed");
-} catch (error) {
-	logger.error(error); // preserves stack output
+} catch (error: unknown) {
+	if (error instanceof Error) {
+		logger.error(error); // preserves stack output
+	} else {
+		logger.error(new Error(String(error)));
+	}
 }
 ```
 
