@@ -48,6 +48,7 @@ const logger = new Logger("[my-app]", {
 	color: true, // Enable colored output
 	timestamp: true, // Add timestamps to messages
 	timestampFormat: "full", // Configure timestamp format
+	locale: "de-DE", // Optional locale for timestamps
 	verboseTimer: true, // Show timer start messages
 	colors: {
 		// Custom colors
@@ -65,16 +66,44 @@ const logger = new Logger("[my-app]", {
 | `color`           | boolean                     | `true`  | Enable colored output        |
 | `timestamp`       | boolean                     | `false` | Add timestamps to messages   |
 | `timestampFormat` | "full" \| "time" \| "short" | "time"  | Timestamp format             |
+| `locale`          | string \| string[]          | "en-US" | Locale used for timestamps   |
 | `verboseTimer`    | boolean                     | `false` | Show timer start messages    |
 | `colors`          | Partial<ColorConfig>        | -       | Custom colors for log levels |
 
 ### Timestamp Formats
 
-- `full`: `YYYY-MM-DD HH:mm:ss`
-- `time`: `HH:mm:ss`
-- `short`: `MM-DD HH:mm:ss`
+- `full`: full date and time
+- `time`: time only
+- `short`: short date and time
+
+Timestamp output is generated via `toLocaleString(locale, ...)`.
+By default, locale is `en-US`; set `locale` to customize it.
+
+## Error Stack Traces
+
+To keep stack traces, pass the actual `Error` object to `logger.error`:
+
+```ts
+try {
+	throw new Error("Something failed");
+} catch (error: unknown) {
+	if (error instanceof Error) {
+		logger.error(error); // preserves stack output
+	} else {
+		logger.error(new Error(String(error)));
+	}
+}
+```
+
+If you pass `error.message` (string) instead, the stack trace is not available.
 
 ## Timer Functionality
+
+Timer behavior is consistent whether colors are enabled or disabled:
+
+- `color: true` → colorized timer output
+- `color: false` → plain timer output
+- `verboseTimer: true` → logs `start` message before duration output
 
 ```ts
 // Start a timer
@@ -144,7 +173,7 @@ const logger = new Logger("[my-app]", {
 });
 
 logger.info("Application started");
-// Output: [2024-02-16 15:30:45] [my-app] Application started
+// Output: [02/16/2024, 15:30:45] [my-app] Application started
 ```
 
 ### With Debug Messages

@@ -36,12 +36,18 @@ export interface LoggerOptions {
    */
   timestamp?: boolean;
   /**
-   * Format of the timestamp. Possible values:
-   * - 'full' = 'YYYY-MM-DD HH:mm:ss'
-   * - 'time' = 'HH:mm:ss'
-   * - 'short' = 'MM-DD HH:mm:ss'
+   * Format of the timestamp.
+   * Possible values:
+   * - 'full' = date + time
+   * - 'time' = time only
+   * - 'short' = short date + time
    */
   timestampFormat?: 'full' | 'time' | 'short';
+  /**
+   * Locale used by timestamp formatting.
+   * Defaults to 'en-US' for deterministic output.
+   */
+  locale?: string | string[];
   /**
    * Custom colors for different log levels.
    * In browser: use CSS color values (e.g., '#00ff00', 'red', etc.)
@@ -131,9 +137,12 @@ export class Logger {
 
   /**
    * Logs an error message.
+   * Accepts unknown values (e.g. strict TypeScript catch variables).
+   * When an {@link Error} is provided, its stack (or name/message fallback)
+   * is logged so stack traces remain visible.
    * @param args The arguments to be logged.
    */
-  error(...args: LogArgument[]) {
+  error(...args: unknown[]) {
     this.logInternal(ERROR, ...args);
     return this;
   }
@@ -152,35 +161,37 @@ export class Logger {
 
   /**
    * Starts a timer with a label.
+    * Timer behavior is unified across color modes:
+    * - with `color: true`, output is colorized
+    * - with `color: false`, output is plain text
    * @param label The label for the timer.
    */
   time(label: string, level: LevelType = Level.TIMER) {
-    if (!this.options.color) {
-      console.time(`${this.prefix} ${label}`);
-      return;
-    }
-
     this.timers.set(label, performance.now());
     if (this.options.verboseTimer) {
       if (isBrowser) {
-        console.log(`%c${this.prefix} ${label}: start`, this.getColor(level));
+        if (this.options.color) {
+          console.log(`%c${this.prefix} ${label}: start`, this.getColor(level));
+        } else {
+          console.log(`${this.prefix} ${label}: start`);
+        }
       } else {
-        const color = this.getColor(level);
-        console.log(`${color}${this.prefix} ${label}: start${'\x1b[0m'}`);
+        if (this.options.color) {
+          const color = this.getColor(level);
+          console.log(`${color}${this.prefix} ${label}: start${'\x1b[0m'}`);
+        } else {
+          console.log(`${this.prefix} ${label}: start`);
+        }
       }
     }
   }
 
   /**
    * Ends a timer with a label.
+    * Logs a warning if the timer label was not started.
    * @param label The label for the timer.
    */
   timeEnd(label: string, level: LevelType = Level.TIMER) {
-    if (!this.options.color) {
-      console.timeEnd(`${this.prefix} ${label}`);
-      return;
-    }
-
     const startTime = this.timers.get(label);
     if (startTime === undefined) {
       console.warn(`Timer '${this.prefix} ${label}' does not exist`);
@@ -191,10 +202,18 @@ export class Logger {
     this.timers.delete(label);
 
     if (isBrowser) {
-      console.log(`%c${this.prefix} ${label}: ${duration.toFixed(2)}ms`, this.getColor(level));
+      if (this.options.color) {
+        console.log(`%c${this.prefix} ${label}: ${duration.toFixed(2)}ms`, this.getColor(level));
+      } else {
+        console.log(`${this.prefix} ${label}: ${duration.toFixed(2)}ms`);
+      }
     } else {
-      const color = this.getColor(level);
-      console.log(`${color}${this.prefix} ${label}: ${duration.toFixed(2)}ms${'\x1b[0m'}`);
+      if (this.options.color) {
+        const color = this.getColor(level);
+        console.log(`${color}${this.prefix} ${label}: ${duration.toFixed(2)}ms${'\x1b[0m'}`);
+      } else {
+        console.log(`${this.prefix} ${label}: ${duration.toFixed(2)}ms`);
+      }
     }
   }
 
@@ -235,7 +254,8 @@ export class Logger {
         };
     }
 
-    return `[${date.toLocaleString('en-US', options)}] `;
+    const locale = this.options.locale ?? 'en-US';
+    return `[${date.toLocaleString(locale, options)}] `;
   }
 
   private getColor(level: LevelType): string {
@@ -258,25 +278,52 @@ export class Logger {
     }
   }
 
+  private normalizeLogArgs(level: LevelType | undefined, args: any[]): any[] {
+    if (level !== Level.ERROR) {
+      return args;
+    }
+
+    return args.map((arg) => {
+      if (arg instanceof Error) {
+        return arg.stack ?? `${arg.name}: ${arg.message}`;
+      }
+
+      return arg;
+    });
+  }
+
+  private getConsoleMethod(level?: LevelType): (...data: any[]) => void {
+    switch (level) {
+      case Level.ERROR:
+        return console.error.bind(console);
+      case Level.WARN:
+        return console.warn.bind(console);
+      default:
+        return console.log.bind(console);
+    }
+  }
+
   private logInternal(logOptions?: LogOptions, ...args: any[]) {
     const timestamp = this.getTimestamp();
     const prefix = timestamp + this.prefix;
+    const normalizedArgs = this.normalizeLogArgs(logOptions?.level, args);
+    const logMethod = this.getConsoleMethod(logOptions?.level);
 
     if (!this.options.color) {
-      console.log(prefix, ...args);
+      logMethod(prefix, ...normalizedArgs);
       return;
     }
 
     if (isBrowser) {
       const style = logOptions ? this.getColor(logOptions.level) : '';
-      const formatters = args.map((arg) => this.getFormatSpecifier(arg));
-      console.log(`%c${prefix} ${formatters.join(' ')}`, style, ...args);
+      const formatters = normalizedArgs.map((arg) => this.getFormatSpecifier(arg));
+      logMethod(`%c${prefix} ${formatters.join(' ')}`, style, ...normalizedArgs);
       return;
     }
 
     const color = logOptions ? this.getColor(logOptions.level) : '';
     const reset = '\x1b[0m';
-    console.log(`${color}${prefix}`, ...args, reset);
+    logMethod(`${color}${prefix}`, ...normalizedArgs, reset);
   }
 
   /**
