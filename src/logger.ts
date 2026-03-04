@@ -161,9 +161,9 @@ export class Logger {
 
   /**
    * Starts a timer with a label.
-    * Timer behavior is unified across color modes:
-    * - with `color: true`, output is colorized
-    * - with `color: false`, output is plain text
+   * Timer behavior is unified across color modes:
+   * - with `color: true`, output is colorized
+   * - with `color: false`, output is plain text
    * @param label The label for the timer.
    */
   time(label: string, level: LevelType = Level.TIMER) {
@@ -188,7 +188,7 @@ export class Logger {
 
   /**
    * Ends a timer with a label.
-    * Logs a warning if the timer label was not started.
+   * Logs a warning if the timer label was not started.
    * @param label The label for the timer.
    */
   timeEnd(label: string, level: LevelType = Level.TIMER) {

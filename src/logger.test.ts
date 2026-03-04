@@ -343,9 +343,7 @@ describe('Logger', () => {
       const warnSpy = spyOn(console, 'warn');
 
       logger.info(LOG_MESSAGE);
-      expect(logSpy).toHaveBeenCalledWith(
-        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'));
 
       logger.error(LOG_MESSAGE);
       expect(errorSpy).toHaveBeenCalledWith(
@@ -353,9 +351,7 @@ describe('Logger', () => {
       );
 
       logger.warn(LOG_MESSAGE);
-      expect(warnSpy).toHaveBeenCalledWith(
-        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'),
-      );
+      expect(warnSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'));
 
       logSpy.mockRestore();
       errorSpy.mockRestore();
@@ -375,9 +371,7 @@ describe('Logger', () => {
       const warnSpy = spyOn(console, 'warn');
 
       logger.info(LOG_MESSAGE);
-      expect(logSpy).toHaveBeenCalledWith(
-        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'));
 
       logger.error(LOG_MESSAGE);
       expect(errorSpy).toHaveBeenCalledWith(
@@ -385,9 +379,7 @@ describe('Logger', () => {
       );
 
       logger.warn(LOG_MESSAGE);
-      expect(warnSpy).toHaveBeenCalledWith(
-        ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'),
-      );
+      expect(warnSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'));
 
       logSpy.mockRestore();
       errorSpy.mockRestore();
