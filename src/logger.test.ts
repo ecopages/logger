@@ -60,7 +60,7 @@ describe('Logger', () => {
 
   it('should log warning message', () => {
     logger = new Logger(LOG_PREFIX);
-    const consoleSpy = spyOn(console, 'log');
+    const consoleSpy = spyOn(console, 'warn');
     logger.warn(LOG_MESSAGE);
     expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'));
     consoleSpy.mockRestore();
@@ -68,10 +68,25 @@ describe('Logger', () => {
 
   it('should log error message', () => {
     logger = new Logger(LOG_PREFIX);
-    const consoleSpy = spyOn(console, 'log');
+    const consoleSpy = spyOn(console, 'error');
     logger.error(LOG_MESSAGE);
     expect(consoleSpy).toHaveBeenCalledWith(
       ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'ERROR'),
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('should log stack text when error object is provided', () => {
+    logger = new Logger(LOG_PREFIX);
+    const consoleSpy = spyOn(console, 'error');
+    const expectedStack = 'Error: boom\\n    at test';
+    const error = new Error('boom');
+    error.stack = expectedStack;
+
+    logger.error(error);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      ...getExpectedFormat(logger, LOG_PREFIX, [expectedStack], undefined, 'ERROR'),
     );
     consoleSpy.mockRestore();
   });
@@ -106,7 +121,7 @@ describe('Logger', () => {
 
   it('should log warning message without colors when color is false', () => {
     logger = new Logger(LOG_PREFIX, { color: false });
-    const consoleSpy = spyOn(console, 'log');
+    const consoleSpy = spyOn(console, 'warn');
     logger.warn(LOG_MESSAGE);
     expect(consoleSpy).toHaveBeenCalledWith(LOG_PREFIX, LOG_MESSAGE);
     consoleSpy.mockRestore();
@@ -114,7 +129,7 @@ describe('Logger', () => {
 
   it('should log error message without colors when color is false', () => {
     logger = new Logger(LOG_PREFIX, { color: false });
-    const consoleSpy = spyOn(console, 'log');
+    const consoleSpy = spyOn(console, 'error');
     logger.error(LOG_MESSAGE);
     expect(consoleSpy).toHaveBeenCalledWith(LOG_PREFIX, LOG_MESSAGE);
     consoleSpy.mockRestore();
@@ -292,24 +307,28 @@ describe('Logger', () => {
       };
 
       logger = new Logger(LOG_PREFIX, { colors: customColors });
-      const consoleSpy = spyOn(console, 'log');
+      const logSpy = spyOn(console, 'log');
+      const errorSpy = spyOn(console, 'error');
+      const warnSpy = spyOn(console, 'warn');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logSpy).toHaveBeenCalledWith(
         ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
       );
 
       logger.error(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(errorSpy).toHaveBeenCalledWith(
         ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'ERROR'),
       );
 
       logger.warn(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(warnSpy).toHaveBeenCalledWith(
         ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'),
       );
 
-      consoleSpy.mockRestore();
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
     });
 
     it('should use custom colors in Node.js environment', () => {
@@ -320,24 +339,28 @@ describe('Logger', () => {
       };
 
       logger = new Logger(LOG_PREFIX, { colors: customColors });
-      const consoleSpy = spyOn(console, 'log');
+      const logSpy = spyOn(console, 'log');
+      const errorSpy = spyOn(console, 'error');
+      const warnSpy = spyOn(console, 'warn');
 
       logger.info(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logSpy).toHaveBeenCalledWith(
         ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'INFO'),
       );
 
       logger.error(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(errorSpy).toHaveBeenCalledWith(
         ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'ERROR'),
       );
 
       logger.warn(LOG_MESSAGE);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(warnSpy).toHaveBeenCalledWith(
         ...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], undefined, 'WARN'),
       );
 
-      consoleSpy.mockRestore();
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
     });
 
     it('should merge custom colors with defaults', () => {
@@ -348,6 +371,8 @@ describe('Logger', () => {
 
       logger = new Logger(LOG_PREFIX, { colors: customColors });
       const consoleSpy = spyOn(console, 'log');
+      const errorSpy = spyOn(console, 'error');
+      const warnSpy = spyOn(console, 'warn');
 
       logger.info(LOG_MESSAGE);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -362,6 +387,8 @@ describe('Logger', () => {
       expect(logger['colors'].WARN).toBe(isBrowser ? 'color: #ffff00' : '\x1b[33m');
 
       consoleSpy.mockRestore();
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
     });
   });
 
@@ -576,23 +603,17 @@ describe('Logger', () => {
       warnSpy.mockRestore();
     });
 
-    it('should use console.time when colors are disabled', () => {
+    it('should use unified timer output when colors are disabled', () => {
       logger = new Logger(LOG_PREFIX, { color: false });
-      const timeStartSpy = spyOn(console, 'time');
-      const timeEndSpy = spyOn(console, 'timeEnd');
       const consoleSpy = spyOn(console, 'log');
 
       const timerLabel = 'No Color Timer';
       logger.time(timerLabel);
-      expect(timeStartSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
       expect(consoleSpy).not.toHaveBeenCalled();
 
       logger.timeEnd(timerLabel);
-      expect(timeEndSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
-      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}: 100.00ms`);
 
-      timeStartSpy.mockRestore();
-      timeEndSpy.mockRestore();
       consoleSpy.mockRestore();
     });
 
@@ -703,23 +724,17 @@ describe('Logger', () => {
       warnSpy.mockRestore();
     });
 
-    it('should use console.time for debug timer when colors are disabled', () => {
+    it('should use unified debug timer output when colors are disabled', () => {
       logger = new Logger(LOG_PREFIX, { debug: true, color: false });
-      const timeStartSpy = spyOn(console, 'time');
-      const timeEndSpy = spyOn(console, 'timeEnd');
       const consoleSpy = spyOn(console, 'log');
 
       const timerLabel = 'NoColorDebugTimer';
       logger.debugTime(timerLabel);
-      expect(timeStartSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
       expect(consoleSpy).not.toHaveBeenCalled();
 
       logger.debugTimeEnd(timerLabel);
-      expect(timeEndSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}`);
-      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(`${LOG_PREFIX} ${timerLabel}: 100.00ms`);
 
-      timeStartSpy.mockRestore();
-      timeEndSpy.mockRestore();
       consoleSpy.mockRestore();
     });
 

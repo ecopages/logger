@@ -70,11 +70,31 @@ const logger = new Logger("[my-app]", {
 
 ### Timestamp Formats
 
-- `full`: `YYYY-MM-DD HH:mm:ss`
-- `time`: `HH:mm:ss`
-- `short`: `MM-DD HH:mm:ss`
+- `full`: date + time (en-US locale formatting)
+- `time`: time only
+- `short`: short date + time (en-US locale formatting)
+
+## Error Stack Traces
+
+To keep stack traces, pass the actual `Error` object to `logger.error`:
+
+```ts
+try {
+	throw new Error("Something failed");
+} catch (error) {
+	logger.error(error); // preserves stack output
+}
+```
+
+If you pass `error.message` (string) instead, the stack trace is not available.
 
 ## Timer Functionality
+
+Timer behavior is consistent whether colors are enabled or disabled:
+
+- `color: true` → colorized timer output
+- `color: false` → plain timer output
+- `verboseTimer: true` → logs `start` message before duration output
 
 ```ts
 // Start a timer
