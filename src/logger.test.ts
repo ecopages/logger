@@ -31,14 +31,18 @@ const getExpectedFormat = (
   return [`${logger['colors'][level]}${fullPrefix}`, ...args, '\x1b[0m'];
 };
 
-const mockTimestamp = (expected: string, options: Intl.DateTimeFormatOptions) => {
+const mockTimestamp = (
+  expected: string,
+  options: Intl.DateTimeFormatOptions,
+  expectedLocale: string | string[] = 'en-US',
+) => {
   return spyOn(Date.prototype, 'toLocaleString').mockImplementation(function (
     this: Date,
-    locale?: string | string[],
+    localeValue?: string | string[],
     opts?: Intl.DateTimeFormatOptions,
   ): string {
-    if (!locale && !opts) return expected;
-    expect(locale).toBe('en-US');
+    if (!localeValue && !opts) return expected;
+    expect(localeValue).toEqual(expectedLocale);
     expect(opts).toEqual(options);
     return expected;
   });
@@ -253,6 +257,33 @@ describe('Logger', () => {
       dateNowSpy.mockRestore();
       consoleSpy.mockRestore();
     }
+  });
+
+  it('should use custom locale for timestamp formatting', () => {
+    const expected = '16.02.2024, 15:30:45';
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    };
+    const dateNowSpy = mockTimestamp(expected, options, 'de-DE');
+
+    logger = new Logger(LOG_PREFIX, {
+      timestamp: true,
+      timestampFormat: 'full',
+      locale: 'de-DE',
+    });
+    const consoleSpy = spyOn(console, 'log');
+
+    logger.info(LOG_MESSAGE);
+    expect(consoleSpy).toHaveBeenCalledWith(...getExpectedFormat(logger, LOG_PREFIX, [LOG_MESSAGE], expected));
+
+    dateNowSpy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   it('should include timestamp when timestamp option is true', () => {

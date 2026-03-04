@@ -36,13 +36,18 @@ export interface LoggerOptions {
    */
   timestamp?: boolean;
   /**
-    * Format of the timestamp (rendered using `toLocaleString('en-US', ...)`).
-    * Possible values:
-    * - 'full' = date + time
-    * - 'time' = time only
-    * - 'short' = short date + time
+   * Format of the timestamp.
+   * Possible values:
+   * - 'full' = date + time
+   * - 'time' = time only
+   * - 'short' = short date + time
    */
   timestampFormat?: 'full' | 'time' | 'short';
+  /**
+   * Locale used by timestamp formatting.
+   * Defaults to 'en-US' for deterministic output.
+   */
+  locale?: string | string[];
   /**
    * Custom colors for different log levels.
    * In browser: use CSS color values (e.g., '#00ff00', 'red', etc.)
@@ -249,7 +254,8 @@ export class Logger {
         };
     }
 
-    return `[${date.toLocaleString('en-US', options)}] `;
+    const locale = this.options.locale ?? 'en-US';
+    return `[${date.toLocaleString(locale, options)}] `;
   }
 
   private getColor(level: LevelType): string {

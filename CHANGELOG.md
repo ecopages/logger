@@ -1,5 +1,16 @@
 # @ecopages/logger
 
+## 0.2.3
+
+### Patch Changes
+
+- Improve logging behavior and timer consistency:
+  - Route `warn` and `error` logs to `console.warn` and `console.error`
+  - Preserve stack traces when passing `Error` objects to `logger.error(...)`
+  - Unify timer behavior across `color: true` and `color: false`
+  - Add `locale` option for configurable timestamp locale formatting
+  - Clarify README and JSDoc around timer output and error stack handling
+
 ## 0.2.2
 
 ### Patch Changes
